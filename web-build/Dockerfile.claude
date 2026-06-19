@@ -1,0 +1,8 @@
+#ddev-generated
+# Pulls the prebuilt Claude Code binary into DDEV's web image.
+# DDEV appends this fragment after its own `FROM $BASE_IMAGE`, so a plain
+# `COPY --from=<external image>` works -- no per-project install, just a fast copy.
+#
+# The source image is built daily and published by this repo's build-image
+# workflow to Docker Hub (docker.io/zone1987/claude-code).
+COPY --from=docker.io/zone1987/claude-code:latest /usr/local/bin/claude /usr/local/bin/claude
