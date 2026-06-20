@@ -41,8 +41,14 @@ post_install_actions:
     # then export it in your shell (e.g. ~/.zshrc):
     #   export CLAUDE_CODE_OAUTH_TOKEN="<your-token>"
     # and run `ddev restart`.
+    #
+    # CONTEXT7_TOKEN is OPTIONAL. The context7 plugin works without it (free tier,
+    # lower rate limit). For a higher rate limit, get a key at
+    # https://context7.com/dashboard and export it on the host:
+    #   export CONTEXT7_TOKEN="<your-key>"
     web_environment:
       - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+      - CONTEXT7_TOKEN=${CONTEXT7_TOKEN}
     EOF
     fi
   - |

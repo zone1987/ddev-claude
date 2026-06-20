@@ -11,7 +11,6 @@
 * [Authentication](#authentication)
 * [Usage](#usage)
 * [How it works](#how-it-works)
-* [The Claude Code image](#the-claude-code-image)
 * [Configuration & customization](#configuration--customization)
 * [Removal](#removal)
 * [Resources](#resources)
@@ -28,12 +27,6 @@ The add-on does **not** install Claude per project at build time. Instead it pul
 ```bash
 ddev add-on get zone1987/ddev-claude
 ddev restart
-```
-
-To install a specific branch or pull request while testing:
-
-```bash
-ddev add-on get https://github.com/zone1987/ddev-claude/tarball/main
 ```
 
 ## Authentication
@@ -68,6 +61,19 @@ The add-on creates a `config.token.local.yaml` in your project's `.ddev` directo
 
 > [!NOTE]
 > Alternatively you can log in interactively the first time you run `ddev claude` (no token needed). Your login is persisted in DDEV's global cache volume (see [How it works](#how-it-works)) and survives restarts.
+
+### Context7 (optional)
+
+One of the default plugins is [context7](https://context7.com), which works out of the box with no configuration. If you hit its free-tier rate limit, create an API key at [context7.com/dashboard](https://context7.com/dashboard) and export it on your **host**:
+
+```bash
+export CONTEXT7_TOKEN="<your-key>"
+```
+
+Then run `ddev restart`. The add-on forwards `CONTEXT7_TOKEN` into the web container through the same `config.token.local.yaml` it uses for the OAuth token.
+
+> [!NOTE]
+> If you installed the add-on before this token was added, your existing `config.token.local.yaml` won't have the `CONTEXT7_TOKEN` line. Either add it manually, or delete that (gitignored) file and re-run `ddev add-on get zone1987/ddev-claude` to regenerate it.
 
 ## Usage
 
@@ -108,22 +114,6 @@ If you use Claude Code plugins, cache them once after install:
 
 > [!TIP]
 > Want per-project logins instead of one shared login? In `config.claude.yaml`, change the `shared` path segment to `${DDEV_PROJECT:-default}`.
-
-## The Claude Code image
-
-The image source lives in this repo under [`claude-code/Dockerfile`](claude-code/Dockerfile) — a two-stage build that installs `@anthropic-ai/claude-code` via npm and extracts the single self-contained binary onto a slim Debian carrier (matching the glibc of DDEV's webserver image).
-
-[`.github/workflows/build-image.yml`](.github/workflows/build-image.yml) builds and publishes it to Docker Hub:
-
-* Runs daily at **06:00 UTC** (plus on manual dispatch and on pushes to `claude-code/**`).
-* Resolves the latest version with `npm view @anthropic-ai/claude-code version`.
-* Skips the build if that version's tag already exists on Docker Hub (no upstream release webhook exists, so this is a poll-and-gate).
-* Builds multi-arch (`linux/amd64`, `linux/arm64`) and pushes `:latest` and `:<version>` tags.
-
-> [!IMPORTANT]
-> The workflow requires two repository secrets so it can push to Docker Hub:
-> * `DOCKERHUB_USERNAME` — `zone1987`
-> * `DOCKERHUB_TOKEN` — a Docker Hub access token with Read/Write/Delete
 
 ## Configuration & customization
 
@@ -169,6 +159,7 @@ This removes the add-on files and deletes the generated `config.token.local.yaml
 
 ## Resources
 
+* **Developing or contributing?** See [`README_DEV.md`](README_DEV.md) for the image build pipeline, local testing, and release process.
 * [Claude Code documentation](https://docs.claude.com/en/docs/claude-code)
 * [DDEV Documentation for Add-ons](https://docs.ddev.com/en/stable/users/extend/additional-services/)
 * [DDEV Add-on Registry](https://addons.ddev.com/)
