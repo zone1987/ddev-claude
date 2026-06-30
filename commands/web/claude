@@ -4,5 +4,6 @@
 ## Description: Claude Code
 ## Usage: claude
 ## Example: ddev claude [...]
+## HostWorkingDir: true
 
 claude "$@"
