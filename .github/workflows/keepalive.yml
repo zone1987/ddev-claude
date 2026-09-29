@@ -1,0 +1,57 @@
+name: keepalive
+
+# GitHub disables scheduled workflows in public repositories after 60 days
+# without a push. This add-on is feature complete, so months without a commit are
+# normal and the daily image build gets switched off silently.
+#
+# This workflow runs weekly and does two things:
+#   1. Re-enables build-image and tests through the API (a disabled workflow can
+#      still be enabled that way).
+#   2. Pushes a timestamp file, which resets the inactivity counter. A push made
+#      with the default GITHUB_TOKEN does not count as activity, so a PAT is used.
+#
+# Required repository secret:
+#   KEEPALIVE_TOKEN -> fine-grained PAT for this repository with
+#                      Actions: Read and write, Contents: Read and write
+
+on:
+  schedule:
+    - cron: '40 03 * * 1'   # weekly, Monday 03:40 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.KEEPALIVE_TOKEN }}
+
+      - name: Re-enable scheduled workflows
+        env:
+          GH_TOKEN: ${{ secrets.KEEPALIVE_TOKEN }}
+        run: |
+          for wf in build-image.yml tests.yml; do
+            echo "Enabling ${wf}"
+            gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/enable"
+          done
+
+      - name: Push a timestamp to reset the inactivity counter
+        run: |
+          date -u +%Y-%m-%dT%H:%M:%SZ > .github/keepalive
+          if git diff --quiet -- .github/keepalive; then
+            echo "Timestamp unchanged; nothing to push."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/keepalive
+          git commit -m 'chore: keepalive'
+          git push
