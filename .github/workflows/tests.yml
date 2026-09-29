@@ -3,10 +3,12 @@ on:
   pull_request:
     paths-ignore:
       - "**.md"
+      - ".github/keepalive"
   push:
     branches: [ main ]
     paths-ignore:
       - "**.md"
+      - ".github/keepalive"
 
   schedule:
     - cron: '25 08 * * *'
