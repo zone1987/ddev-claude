@@ -46,12 +46,14 @@ jobs:
       - name: Push a timestamp to reset the inactivity counter
         run: |
           date -u +%Y-%m-%dT%H:%M:%SZ > .github/keepalive
-          if git diff --quiet -- .github/keepalive; then
-            echo "Timestamp unchanged; nothing to push."
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add .github/keepalive
+          # Compare against the index, not the working tree: a file that is not
+          # tracked yet shows no diff and would silently skip the push.
+          if git diff --cached --quiet -- .github/keepalive; then
+            echo "Timestamp unchanged; nothing to push."
+            exit 0
+          fi
           git commit -m 'chore: keepalive'
           git push
